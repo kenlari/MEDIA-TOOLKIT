@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Video Splitter{% endblock %}
+{% block content %}
+<form class="card" method="post" action="{{ url_for('splitter_start') }}" enctype="multipart/form-data">
+  <span class="label">Video to split</span>
+  <select name="existing_file">
+    <option value="">— Upload a new file instead —</option>
+    {% for f in files %}
+    <option value="{{ f.path }}" {{ 'selected' if f.path == preselect }}>{{ f.name }} ({{ f.label }})</option>
+    {% endfor %}
+  </select>
+  <input type="file" name="upload_file" accept="video/mp4,video/*">
+  <div class="hint">Pick a file you already downloaded above, or upload one — not both.</div>
+
+  <div class="row">
+    <div>
+      <span class="label">Clip length (seconds)</span>
+      <input type="number" name="clip_length" value="60" min="1" step="1">
+    </div>
+    <div>
+      <label><input type="checkbox" name="precise"> Precise cuts (slower, re-encodes each clip)</label>
+    </div>
+  </div>
+
+  <div class="style-section">
+    <span class="label">Export style (all optional)</span>
+
+    <div class="inline-group">
+      <label>Aspect ratio:</label>
+      <label><input type="radio" name="aspect" value="original" checked> Original</label>
+      <label><input type="radio" name="aspect" value="16:9"> 16:9</label>
+      <label><input type="radio" name="aspect" value="9:16"> 9:16</label>
+      <label><input type="radio" name="aspect" value="1:1"> 1:1</label>
+    </div>
+    <div class="inline-group">
+      <label>When shape changes:</label>
+      <label><input type="radio" name="fit_fill" value="fit" checked> Fit (black bars)</label>
+      <label><input type="radio" name="fit_fill" value="fill"> Fill (crop edges)</label>
+    </div>
+
+    <span class="label">Watermark text (bottom, optional)</span>
+    <input type="text" name="watermark" placeholder="@yourhandle">
+    <div class="row">
+      <div><span class="label">Size</span><input type="number" name="watermark_size" value="28"></div>
+      <div><span class="label">Color</span>
+        <select name="watermark_color">
+          <option>white</option><option>black</option><option>yellow</option>
+          <option>red</option><option>cyan</option><option>lime</option>
+        </select>
+      </div>
+    </div>
+
+    <label><input type="checkbox" name="number_enabled" id="num-enabled"> Add sequential number/label (top of each clip)</label>
+    <div id="num-options" style="margin-top:10px; display:none;">
+      <span class="label">Label pattern (use {n} where the number goes)</span>
+      <input type="text" name="number_template" value="{n}" placeholder='e.g. "Part {n}", "Ep. {n}"'>
+      <div class="row">
+        <div><span class="label">Start at</span><input type="number" name="number_start" value="1"></div>
+        <div><span class="label">Size</span><input type="number" name="number_size" value="34"></div>
+        <div><span class="label">Color</span>
+          <select name="number_color">
+            <option>white</option><option>black</option><option>yellow</option>
+            <option>red</option><option>cyan</option><option>lime</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn btn-accent btn-block" type="submit">Split Video</button>
+</form>
+
+<script>
+document.getElementById('num-enabled').addEventListener('change', function() {
+  document.getElementById('num-options').style.display = this.checked ? 'block' : 'none';
+});
+</script>
+{% endblock %}

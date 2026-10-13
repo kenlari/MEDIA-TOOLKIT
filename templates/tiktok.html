@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}TikTok Scheduler{% endblock %}
+{% block content %}
+
+<div class="card">
+  <span class="label">App setup (from developers.tiktok.com — one-time)</span>
+  <p class="hint" style="margin-top:0">Redirect URI to register on your TikTok app: <code>{{ redirect_uri }}</code>
+  — this is computed from this site's own domain, so it stays correct wherever this app is deployed.</p>
+
+  <form method="post" action="{{ url_for('tiktok_save_credentials') }}">
+    <span class="label">Client Key</span>
+    <input type="text" name="client_key" value="{{ store.client_key }}">
+    <span class="label">Client Secret</span>
+    <input type="password" name="client_secret" value="{{ store.client_secret }}">
+    <button class="btn btn-secondary" type="submit">Save Credentials</button>
+  </form>
+
+  <div style="margin-top:10px;">
+    {% if connected %}
+      <div class="banner banner-info">Connected{% if store.tokens.open_id %} ({{ store.tokens.open_id }}){% endif %}.
+      Posts stay private until your TikTok app is audited — pick "Only me" below until then.</div>
+      <form method="post" action="{{ url_for('tiktok_connect') }}" style="display:inline">
+        <button class="btn btn-accent" type="submit">Reconnect TikTok Account</button>
+      </form>
+      <form method="post" action="{{ url_for('tiktok_disconnect') }}" style="display:inline">
+        <button class="btn btn-secondary" type="submit">Disconnect</button>
+      </form>
+    {% else %}
+      <div class="banner banner-warn">Not connected. Save your Client Key/Secret, then click Connect.</div>
+      <form method="post" action="{{ url_for('tiktok_connect') }}">
+        <button class="btn btn-accent" type="submit">Connect TikTok Account</button>
+      </form>
+    {% endif %}
+  </div>
+</div>
+
+<form class="card" method="post" action="{{ url_for('tiktok_queue_add') }}" enctype="multipart/form-data">
+  <span class="label">Schedule a post</span>
+  <select name="existing_file">
+    <option value="">— Upload a new file instead —</option>
+    {% for f in files %}
+    <option value="{{ f.path }}" {{ 'selected' if f.path == preselect }}>{{ f.name }} ({{ f.label }})</option>
+    {% endfor %}
+  </select>
+  <input type="file" name="upload_file" accept="video/mp4,video/*">
+
+  <span class="label">Caption</span>
+  <input type="text" name="caption" placeholder="Caption for this post">
+
+  <span class="label">Visibility</span>
+  <select name="privacy">
+    {% for label in privacy_options %}
+    <option value="{{ label }}">{{ label }}</option>
+    {% endfor %}
+  </select>
+
+  <div class="row">
+    <div><span class="label">Post on (YYYY-MM-DD)</span><input type="date" name="post_date" value="{{ today }}"></div>
+    <div><span class="label">At (24h, your local time)</span><input type="time" name="post_time"></div>
+  </div>
+
+  <button class="btn btn-accent btn-block" type="submit">Add to Queue</button>
+</form>
+
+<div class="card">
+  <span class="label">Queue</span>
+  {% if store.queue %}
+  <table class="queue">
+    <tr><th>When</th><th>File</th><th>Status</th><th></th></tr>
+    {% for item in store.queue %}
+    <tr>
+      <td>{{ item.when }}</td>
+      <td>{{ item.file.split('/')[-1] }}</td>
+      <td class="status">{{ item.status }}</td>
+      <td>
+        {% if item.status == 'pending' %}
+        <form method="post" action="{{ url_for('tiktok_queue_post_now', item_id=item.id) }}" style="display:inline">
+          <button class="btn btn-secondary" type="submit" style="padding:4px 10px">Post now</button>
+        </form>
+        {% endif %}
+        <form method="post" action="{{ url_for('tiktok_queue_remove', item_id=item.id) }}" style="display:inline">
+          <button class="btn btn-secondary" type="submit" style="padding:4px 10px">Remove</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}
+  <p class="hint">Nothing queued yet.</p>
+  {% endif %}
+</div>
+{% endblock %}

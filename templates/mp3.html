@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}MP3 Converter{% endblock %}
+{% block content %}
+<form class="card" method="post" action="{{ url_for('mp3_start') }}" enctype="multipart/form-data">
+  <span class="label">File to convert</span>
+  <select name="existing_file">
+    <option value="">— Upload a new file instead —</option>
+    {% for f in files %}
+    <option value="{{ f.path }}" {{ 'selected' if f.path == preselect }}>{{ f.name }} ({{ f.label }})</option>
+    {% endfor %}
+  </select>
+  <input type="file" name="upload_file" accept="video/*,audio/*">
+  <div class="hint">Pick a file you already downloaded above, or upload one — not both.</div>
+
+  <span class="label">MP3 quality</span>
+  <select name="quality">
+    <option value="128k">128 kbps (smaller file)</option>
+    <option value="192k" selected>192 kbps (standard)</option>
+    <option value="256k">256 kbps (high)</option>
+    <option value="320k">320 kbps (best)</option>
+  </select>
+
+  <button class="btn btn-accent btn-block" type="submit">Convert to MP3</button>
+</form>
+{% endblock %}

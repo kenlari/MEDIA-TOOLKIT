@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Privacy Policy{% endblock %}
+{% block content %}
+<div class="card">
+<h1>Privacy Policy — Media Toolkit</h1>
+<p class="hint">Last updated: October 2026</p>
+
+<p>Media Toolkit ("the app") is a personal media utility that downloads, edits, and schedules video content, including publishing to TikTok on behalf of its user.</p>
+
+<h3>What data the app handles</h3>
+<ul>
+<li><strong>TikTok account tokens:</strong> When you connect a TikTok account, the app stores an access token and refresh token on its own server, in order to publish videos on your behalf. These tokens are sent only to TikTok's own API (open.tiktokapis.com) and are never sold or shared with any other third party.</li>
+<li><strong>Video files and captions:</strong> Videos you download, edit, or schedule are stored on the app's server for as long as needed to process and post them. Captions you write are sent only to TikTok's API at the time of posting.</li>
+<li><strong>No analytics or tracking:</strong> The app does not use analytics, advertising, or tracking services, and does not sell any data.</li>
+</ul>
+
+<h3>How data is used</h3>
+<p>Data handled by the app is used solely to perform the actions requested: downloading a video, splitting or converting a video, or publishing a video to a connected TikTok account at a chosen time.</p>
+
+<h3>Data storage and retention</h3>
+<p>Video files, TikTok tokens, and the scheduling queue are stored on the app's own server, not with any third party. Data persists only as long as the app's hosting is active; disconnecting a TikTok account or deleting a queued post removes the associated data.</p>
+
+<h3>Data sharing</h3>
+<p>The app shares data only via the direct API calls to TikTok's own platform (open.tiktokapis.com) necessary to publish content explicitly chosen to post. It does not sell or share data with any other third party.</p>
+
+<h3>Your rights</h3>
+<p>You may disconnect your TikTok account at any time, which immediately stops any further use of your TikTok tokens. You may remove queued posts and uploaded files from the app directly.</p>
+
+<h3>Contact</h3>
+<p>For questions about this policy, contact the app's developer at {{ contact_email }}.</p>
+</div>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}YouTube Downloader{% endblock %}
+{% block content %}
+<form class="card" method="post" action="{{ url_for('downloader_start') }}">
+  <span class="label">YouTube URL</span>
+  <input type="url" name="url" placeholder="https://youtu.be/..." required>
+
+  <span class="label">Format</span>
+  <div class="inline-group" style="display:block">
+    <label><input type="radio" name="mode" value="video_audio" checked> Video + Audio (mp4) — normal video file</label><br>
+    <label><input type="radio" name="mode" value="video_only"> Video only, no sound (mp4)</label><br>
+    <label><input type="radio" name="mode" value="audio_only"> Audio only (mp3)</label>
+  </div>
+
+  <button class="btn btn-yt btn-block" type="submit" style="margin-top:14px">Download</button>
+</form>
+{% endblock %}

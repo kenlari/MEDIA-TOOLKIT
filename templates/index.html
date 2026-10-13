@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Media Toolkit{% endblock %}
+{% block content %}
+<div class="home-grid">
+  <a class="home-card" href="{{ url_for('downloader_page') }}">
+    <div class="icon">📥</div>
+    <h3>YouTube Downloader</h3>
+    <p>Paste a link, choose a format, download.</p>
+  </a>
+  <a class="home-card" href="{{ url_for('splitter_page') }}">
+    <div class="icon">✂️</div>
+    <h3>Video Splitter</h3>
+    <p>Split into clips, with optional reshape, watermark and numbering.</p>
+  </a>
+  <a class="home-card" href="{{ url_for('mp3_page') }}">
+    <div class="icon">🎵</div>
+    <h3>MP3 Converter</h3>
+    <p>Convert any video or audio file to MP3.</p>
+  </a>
+  <a class="home-card" href="{{ url_for('tiktok_page') }}">
+    <div class="icon">📅</div>
+    <h3>TikTok Scheduler</h3>
+    <p>Queue videos and auto-post them at a chosen time.</p>
+  </a>
+</div>
+{% endblock %}

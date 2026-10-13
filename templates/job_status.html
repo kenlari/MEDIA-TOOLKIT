@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Working...{% endblock %}
+{% block content %}
+<div class="card">
+  <span class="label">{{ job.kind|upper }} JOB</span>
+  <div id="banner" class="banner banner-info">{{ job.message or 'Starting...' }}</div>
+  <div class="progress-wrap"><div class="progress-bar" id="progress-bar" style="width:{{ job.progress }}%"></div></div>
+
+  {% if job.kind == 'split' %}
+  <button class="btn btn-secondary" id="stop-btn" onclick="stopJob()">Stop</button>
+  {% endif %}
+
+  <div class="log-box" id="log-box">{% for line in job.log %}{{ line }}\n{% endfor %}</div>
+
+  <div id="done-actions" style="margin-top:16px; display:none;"></div>
+</div>
+
+<script>
+const jobId = {{ job.id|tojson }};
+const nextTool = {{ next_tool|tojson }};
+const kind = {{ job.kind|tojson }};
+
+function stopJob() {
+  fetch(`/splitter/stop/${jobId}`, {method: 'POST'});
+  document.getElementById('stop-btn').disabled = true;
+  document.getElementById('stop-btn').innerText = 'Stopping...';
+}
+
+function renderDone(job) {
+  document.getElementById('banner').className = 'banner banner-info';
+  document.getElementById('banner').innerText = 'Done!';
+  const actions = document.getElementById('done-actions');
+  actions.style.display = 'block';
+
+  if (kind === 'download') {
+    const path = job.result.path || '';
+    const mode = job.result.mode || '';
+    let html = `<p><strong>${job.result.filename || 'File'}</strong> is ready.</p>`;
+    html += `<a class="btn btn-yt" href="/downloads/${encodeURIComponent(job.result.filename)}">Download file</a> `;
+    if (job.result.filename) {
+      html += `<a class="btn btn-secondary" href="/splitter?file=${encodeURIComponent(path)}">Split this video</a> `;
+      if (mode === 'video_audio') {
+        html += `<a class="btn btn-secondary" href="/mp3?file=${encodeURIComponent(path)}">Convert to MP3</a> `;
+      }
+      html += `<a class="btn btn-secondary" href="/tiktok?file=${encodeURIComponent(path)}">Schedule on TikTok</a>`;
+    }
+    actions.innerHTML = html;
+  } else if (kind === 'split') {
+    let html = `<p>${job.result.clip_count} clip(s) created` +
+      (job.result.error_count ? ` (${job.result.error_count} failed)` : '') + `.</p>`;
+    html += `<a class="btn btn-accent" href="/splitter/download/${jobId}">Download clips (.zip)</a>`;
+    actions.innerHTML = html;
+  } else if (kind === 'mp3') {
+    let html = `<p>Converted.</p>`;
+    html += `<a class="btn btn-accent" href="/mp3/download/${jobId}">Download MP3</a>`;
+    actions.innerHTML = html;
+  }
+}
+
+function renderError(job) {
+  document.getElementById('banner').className = 'banner banner-error';
+  document.getElementById('banner').innerText = 'Error: ' + job.error;
+}
+
+function poll() {
+  fetch(`/api/job/${jobId}`).then(r => r.json()).then(job => {
+    document.getElementById('progress-bar').style.width = (job.progress || 0) + '%';
+    if (job.status === 'running') {
+      document.getElementById('banner').innerText = job.message || 'Working...';
+      document.getElementById('log-box').innerText = (job.log || []).join('\n');
+      setTimeout(poll, 1500);
+    } else if (job.status === 'done') {
+      document.getElementById('log-box').innerText = (job.log || []).join('\n');
+      renderDone(job);
+    } else if (job.status === 'error') {
+      document.getElementById('log-box').innerText = (job.log || []).join('\n');
+      renderError(job);
+    }
+  }).catch(() => setTimeout(poll, 3000));
+}
+poll();
+</script>
+{% endblock %}
