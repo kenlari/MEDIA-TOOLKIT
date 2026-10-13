@@ -71,13 +71,20 @@ def format_hms(seconds):
 # YouTube download
 # ---------------------------------------------------------------------------
 
-def build_ytdlp_opts(mode, outtmpl, progress_hook=None):
+def build_ytdlp_opts(mode, outtmpl, progress_hook=None, cookiefile=None):
     common = {
         "outtmpl": outtmpl,
         "quiet": True,
         "no_warnings": True,
         "noplaylist": True,
+        # YouTube increasingly challenges requests from datacenter/cloud IPs
+        # (Railway, etc.) with "Sign in to confirm you're not a bot," even
+        # for public videos. A cookies.txt exported from a logged-in browser
+        # session lets yt-dlp present as a real signed-in session instead.
+        "extractor_args": {"youtube": {"player_client": ["web", "android"]}},
     }
+    if cookiefile and os.path.isfile(cookiefile):
+        common["cookiefile"] = cookiefile
     if progress_hook:
         common["progress_hooks"] = [progress_hook]
 

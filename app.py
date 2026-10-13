@@ -24,7 +24,7 @@ import uuid
 
 from flask import (
     Flask, render_template, request, redirect, url_for, jsonify,
-    send_from_directory, flash, abort
+    send_from_directory, flash, abort, Response
 )
 
 import yt_dlp
@@ -80,6 +80,13 @@ def home():
 
 CONTACT_EMAIL = os.environ.get("CONTACT_EMAIL", "thefitfola@gmail.com")
 
+# YouTube increasingly challenges requests from datacenter IPs (Railway,
+# etc.) with "Sign in to confirm you're not a bot," even for public videos.
+# A cookies.txt exported from a logged-in browser session on your own
+# computer lets yt-dlp present as that signed-in session instead. Uploaded
+# once here, stored under APP_DATA_DIR so it survives redeploys.
+COOKIES_PATH = os.path.join(APP_DATA_DIR, "cookies.txt")
+
 
 @app.route("/privacy")
 def privacy_page():
@@ -91,13 +98,65 @@ def terms_page():
     return render_template("terms.html", contact_email=CONTACT_EMAIL)
 
 
+# --- TikTok domain-verification files -------------------------------------
+# One-time proof-of-ownership files TikTok asks for when you register the
+# Web URL / Privacy Policy URL / Terms of Service URL for the Production
+# app. Each must be served as plain text at the exact path TikTok gives you.
+# Hardcoded here (rather than a generic catch-all route) so there's no risk
+# of clashing with any other route on the site.
+
+@app.route("/tiktokVa2mVGNYjMGPp5BJkGVrTrD1J0U1klfF.txt")
+def tiktok_verify_root():
+    return Response(
+        "tiktok-developers-site-verification=Va2mVGNYjMGPp5BJkGVrTrD1J0U1klfF\n",
+        mimetype="text/plain",
+    )
+
+
+@app.route("/privacy/tiktok9AZMt1owpACEu6xlrWZlYSJIxacP4rx6.txt")
+def tiktok_verify_privacy():
+    return Response(
+        "tiktok-developers-site-verification=9AZMt1owpACEu6xlrWZlYSJIxacP4rx6\n",
+        mimetype="text/plain",
+    )
+
+
+@app.route("/terms/tiktok4VMjr0QwsBKmbpj0qKeNFRA0IiBx1a1h.txt")
+def tiktok_verify_terms():
+    return Response(
+        "tiktok-developers-site-verification=4VMjr0QwsBKmbpj0qKeNFRA0IiBx1a1h\n",
+        mimetype="text/plain",
+    )
+
+
 # ===========================================================================
 # YouTube Downloader
 # ===========================================================================
 
 @app.route("/downloader", methods=["GET"])
 def downloader_page():
-    return render_template("downloader.html")
+    return render_template(
+        "downloader.html",
+        cookies_set=os.path.isfile(COOKIES_PATH),
+    )
+
+
+@app.route("/downloader/cookies", methods=["POST"])
+def downloader_cookies():
+    action = request.form.get("action", "upload")
+    if action == "clear":
+        if os.path.isfile(COOKIES_PATH):
+            os.remove(COOKIES_PATH)
+        flash("Cookies file removed.", "info")
+        return redirect(url_for("downloader_page"))
+
+    f = request.files.get("cookies_file")
+    if not f or not f.filename:
+        flash("Choose a cookies.txt file first.", "error")
+        return redirect(url_for("downloader_page"))
+    f.save(COOKIES_PATH)
+    flash("Cookies file saved — downloads will now use it.", "info")
+    return redirect(url_for("downloader_page"))
 
 
 @app.route("/downloader/start", methods=["POST"])
@@ -126,7 +185,8 @@ def _run_download(job_id, url, mode):
         elif d["status"] == "finished":
             jobs.update_job(job_id, progress=100, message="Processing / converting...")
 
-    opts = media_tools.build_ytdlp_opts(mode, outtmpl, progress_hook=hook)
+    cookiefile = COOKIES_PATH if os.path.isfile(COOKIES_PATH) else None
+    opts = media_tools.build_ytdlp_opts(mode, outtmpl, progress_hook=hook, cookiefile=cookiefile)
     try:
         with yt_dlp.YoutubeDL(opts) as ydl:
             info = ydl.extract_info(url, download=True)

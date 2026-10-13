@@ -1,6 +1,32 @@
 {% extends "base.html" %}
 {% block title %}YouTube Downloader{% endblock %}
 {% block content %}
+
+<div class="card">
+  <span class="label">YouTube sign-in cookies</span>
+  {% if cookies_set %}
+  <div class="banner banner-info">Cookies file is set — downloads will use it.</div>
+  <form method="post" action="{{ url_for('downloader_cookies') }}" style="display:inline">
+    <input type="hidden" name="action" value="clear">
+    <button class="btn btn-secondary" type="submit" style="padding:4px 10px">Remove cookies file</button>
+  </form>
+  {% else %}
+  <div class="banner banner-warn">Not set. YouTube often blocks downloads from servers like this one with
+    "Sign in to confirm you're not a bot" until a cookies file is added.</div>
+  {% endif %}
+  <p class="hint" style="margin-top:10px">
+    How to get one: install a "cookies.txt" / "Get cookies.txt LOCALLY" extension in your browser
+    (Chrome/Edge/Firefox), sign in to youtube.com in that browser, open any YouTube video, use the
+    extension to export cookies for youtube.com, then upload the file below. Treat this file like a
+    password — it's a copy of your logged-in session.
+  </p>
+  <form method="post" action="{{ url_for('downloader_cookies') }}" enctype="multipart/form-data">
+    <input type="hidden" name="action" value="upload">
+    <input type="file" name="cookies_file" accept=".txt">
+    <button class="btn btn-secondary" type="submit" style="margin-top:10px">Upload cookies.txt</button>
+  </form>
+</div>
+
 <form class="card" method="post" action="{{ url_for('downloader_start') }}">
   <span class="label">YouTube URL</span>
   <input type="url" name="url" placeholder="https://youtu.be/..." required>
