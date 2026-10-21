@@ -28,4 +28,4 @@ EXPOSE 5000
 # serve several requests (including long-running download/split jobs,
 # which run on their own background threads) concurrently.
 # Railway injects $PORT; default to 5000 for local/non-Railway runs.
-CMD gunicorn --bind 0.0.0.0:${PORT:-5000} --workers 1 --threads 8 --timeout 120 app:app
+CMD gunicorn --bind 0.0.0.0:${PORT:-5000} --workers 1 --threads 8 --timeout 120 --forwarded-allow-ips="*" app:app

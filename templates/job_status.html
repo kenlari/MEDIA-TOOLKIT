@@ -26,6 +26,46 @@ function stopJob() {
   document.getElementById('stop-btn').innerText = 'Stopping...';
 }
 
+// "Save to phone": opens the phone's share sheet (Save Video / Save to Files)
+// using the Web Share API. Browsers cannot silently write to a phone's
+// storage, so this is the closest thing; falls back to a normal download.
+function guessMime(name) {
+  const n = (name || '').toLowerCase();
+  if (n.endsWith('.mp3')) return 'audio/mpeg';
+  if (n.endsWith('.zip')) return 'application/zip';
+  if (n.endsWith('.webm')) return 'video/webm';
+  return 'video/mp4';
+}
+
+function addSaveToPhone(container, url, filename) {
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-secondary';
+  btn.type = 'button';
+  btn.style.marginLeft = '6px';
+  btn.textContent = 'Save to phone';
+  btn.addEventListener('click', async () => {
+    const original = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Preparing...';
+    try {
+      const resp = await fetch(url);
+      if (!resp.ok) throw new Error('download failed');
+      const blob = await resp.blob();
+      const file = new File([blob], filename, {type: guessMime(filename)});
+      if (navigator.canShare && navigator.canShare({files: [file]})) {
+        await navigator.share({files: [file], title: filename});
+      } else {
+        window.location.href = url;  // browser without file sharing: normal download
+      }
+    } catch (e) {
+      if (e && e.name !== 'AbortError') window.location.href = url;
+    }
+    btn.disabled = false;
+    btn.textContent = original;
+  });
+  container.appendChild(btn);
+}
+
 function renderDone(job) {
   document.getElementById('banner').className = 'banner banner-info';
   document.getElementById('banner').innerText = 'Done!';
@@ -45,15 +85,20 @@ function renderDone(job) {
       html += `<a class="btn btn-secondary" href="/tiktok?file=${encodeURIComponent(path)}">Schedule on TikTok</a>`;
     }
     actions.innerHTML = html;
+    if (job.result.filename) {
+      addSaveToPhone(actions, `/downloads/${encodeURIComponent(job.result.filename)}`, job.result.filename);
+    }
   } else if (kind === 'split') {
     let html = `<p>${job.result.clip_count} clip(s) created` +
       (job.result.error_count ? ` (${job.result.error_count} failed)` : '') + `.</p>`;
     html += `<a class="btn btn-accent" href="/splitter/download/${jobId}">Download clips (.zip)</a>`;
     actions.innerHTML = html;
+    addSaveToPhone(actions, `/splitter/download/${jobId}`, 'clips.zip');
   } else if (kind === 'mp3') {
     let html = `<p>Converted.</p>`;
     html += `<a class="btn btn-accent" href="/mp3/download/${jobId}">Download MP3</a>`;
     actions.innerHTML = html;
+    addSaveToPhone(actions, `/mp3/download/${jobId}`, 'audio.mp3');
   }
 }
 

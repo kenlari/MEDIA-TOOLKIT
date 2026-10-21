@@ -44,6 +44,13 @@ for d in (DOWNLOADS_DIR, CLIPS_DIR, CONVERTED_DIR, UPLOADS_DIR):
     os.makedirs(d, exist_ok=True)
 
 app = Flask(__name__)
+
+# Railway terminates HTTPS at its proxy and forwards plain HTTP to us. Trust the
+# X-Forwarded-* headers so url_for(..., _external=True) builds https:// URLs.
+# Without this the TikTok redirect_uri comes out as http://... and TikTok
+# rejects it ("redirect_uri" error).
+from werkzeug.middleware.proxy_fix import ProxyFix
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-change-me")
 app.config["MAX_CONTENT_LENGTH"] = 2 * 1024 * 1024 * 1024  # 2GB upload cap
 
